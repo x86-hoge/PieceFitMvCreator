@@ -7,7 +7,8 @@ class PieceFitMvCreator:
         self.slider_size = (64,64)
         self.background_img = cv2.resize(cv2.imread(background_img_path), self.base_size)
         self.overlap_img = cv2.resize(cv2.imread(overlap_img_path), self.base_size)
-        self.overlay_img = cv2.resize(cv2.imread(overlay_img_path), self.slider_size)
+        self.overlay_img = None
+
         self.fixed_img = cv2.resize(cv2.imread(overlay_img_path), self.slider_size)
         self.output_file_path = str(time.time()).replace('.','')+'_out.mp4'
         self.duration_sec = duration_sec
@@ -22,32 +23,40 @@ class PieceFitMvCreator:
 
             base_height, base_width, _ = base.shape
             fixed_height, fixed_width, _ = self.fixed_img.shape
-            overlay_img_height, overlay_img_width,_ = self.overlay_img.shape
             overlap_img_height, overlap_img_width, _ = self.overlap_img.shape
+            fit_pos_x = 150
+            fix_pos_y = self.base_size[1]-200-fixed_height
 
-            cmn_height = self.base_size[1]-40-fixed_height
-
-            base[cmn_height:cmn_height+fixed_height, 100:100+fixed_width] = self.fixed_img
+            self.overlay_img = base.copy()
+            self.overlay_img = self.overlay_img[fix_pos_y:fix_pos_y+self.slider_size[1], fit_pos_x:fit_pos_x+self.slider_size[0]]
+            overlay_img_height, overlay_img_width,_ = self.overlay_img.shape
+            
+            base[fix_pos_y:fix_pos_y+fixed_height, fit_pos_x:fit_pos_x+fixed_width] = self.fixed_img
             
             x_position = -overlay_img_width
 
             for _ in range(int(self.duration_sec * self.fps)):
                 img = base.copy()
-                if (x_position+overlay_img_width) > base_width:
-                    diff_width = x_position+overlay_img_width-base_width
-                    img[cmn_height:cmn_height+overlay_img_height, 0:overlay_img_width-diff_width] = self.overlay_img[0:overlay_img_height, diff_width:overlay_img_width]
-                elif  0 > x_position:
-                    diff_width = x_position+overlay_img_width
-                    img[cmn_height:cmn_height+overlay_img_height, base_width-diff_width:base_width] = self.overlay_img[0:overlay_img_height, 0:diff_width]
-                else:
-                    img[cmn_height:cmn_height+overlay_img_height, base_width-overlay_img_width-x_position:base_width-x_position] = self.overlay_img
 
-                    if x_position <= base_width-100-overlay_img_height and x_position > base_width-100-overlay_img_height-3:
+                #screen fade in
+                if 0 > x_position:
+                    diff_width = x_position+overlay_img_width
+                    img[fix_pos_y:fix_pos_y+overlay_img_height, base_width-diff_width:base_width] = self.overlay_img[0:overlay_img_height, 0:diff_width]
+                
+                #screen fade out
+                elif x_position+overlay_img_width > base_width:
+                    diff_width = x_position+overlay_img_width-base_width
+                    img[fix_pos_y:fix_pos_y+overlay_img_height, 0:overlay_img_width-diff_width] = self.overlay_img[0:overlay_img_height, diff_width:overlay_img_width]
+                
+                #screen range
+                else:
+                    img[fix_pos_y:fix_pos_y+overlay_img_height, base_width-overlay_img_width-x_position:base_width-x_position] = self.overlay_img
+                    if x_position <= base_width-fit_pos_x-overlay_img_height and x_position > base_width-fit_pos_x-overlay_img_height-3:
                         img[0:overlap_img_height, 0:overlap_img_width] = self.overlap_img
 
                 arr.append(img)
                 x_position += self.slide_distance
-
+                
                 if x_position > base_width:
                     x_position = -overlay_img_width
  
