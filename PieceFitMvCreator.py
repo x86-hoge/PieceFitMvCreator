@@ -16,7 +16,7 @@ class PieceFitMvCreator:
         
     def run(self):
         try:
-            x_position = 0
+            
             arr =[]
             base = self.background_img.copy()
 
@@ -29,23 +29,27 @@ class PieceFitMvCreator:
 
             base[cmn_height:cmn_height+fixed_height, 100:100+fixed_width] = self.fixed_img
             
+            x_position = -overlay_img_width
+
             for _ in range(int(self.duration_sec * self.fps)):
                 img = base.copy()
-                print(x_position)
                 if (x_position+overlay_img_width) > base_width:
-                    diff_width = (x_position+overlay_img_width)-base_width
+                    diff_width = x_position+overlay_img_width-base_width
                     img[cmn_height:cmn_height+overlay_img_height, 0:overlay_img_width-diff_width] = self.overlay_img[0:overlay_img_height, diff_width:overlay_img_width]
+                elif  0 > x_position:
+                    diff_width = x_position+overlay_img_width
+                    img[cmn_height:cmn_height+overlay_img_height, base_width-diff_width:base_width] = self.overlay_img[0:overlay_img_height, 0:diff_width]
                 else:
                     img[cmn_height:cmn_height+overlay_img_height, base_width-overlay_img_width-x_position:base_width-x_position] = self.overlay_img
 
-                if x_position <= base_width-100 and x_position > base_width-100-3:
-                    img[0:overlap_img_height, 0:overlap_img_width] = self.overlap_img
+                    if x_position <= base_width-100-overlay_img_height and x_position > base_width-100-overlay_img_height-3:
+                        img[0:overlap_img_height, 0:overlap_img_width] = self.overlap_img
 
                 arr.append(img)
                 x_position += self.slide_distance
 
                 if x_position > base_width:
-                    x_position = 0
+                    x_position = -overlay_img_width
  
             fourcc = cv2.VideoWriter_fourcc(*"mp4v")
             video_writer = cv2.VideoWriter(self.output_file_path, fourcc, self.fps,self.base_size)
