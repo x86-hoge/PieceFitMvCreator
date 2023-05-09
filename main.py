@@ -3,7 +3,7 @@ from PieceFitMvCreator import PieceFitMvCreator
 background_img_path = 'background.png'
 overlay_img_path = 'piece.png'
 overlap_img_path = 'overlap.png'
-duration_sec =10
+duration_sec =20
 slide_distance = 1
 
 if __name__ == "__main__":
