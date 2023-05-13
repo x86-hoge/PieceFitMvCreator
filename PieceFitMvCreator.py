@@ -2,14 +2,14 @@ import cv2
 import time
 
 class PieceFitMvCreator:
-    def __init__(self, background_img_path, overlap_img_path, overlay_img_path, duration_sec, slide_distance): 
+    def __init__(self, background_img_path, overlap_img_path, overlay_img_path, fixed_img_path, duration_sec, slide_distance): 
         self.base_size = (400,600)
         self.slider_size = (64,64)
         self.background_img = cv2.resize(cv2.imread(background_img_path), self.base_size)
         self.overlap_img = cv2.resize(cv2.imread(overlap_img_path), self.base_size)
-        self.overlay_img = None
-
-        self.fixed_img = cv2.resize(cv2.imread(overlay_img_path), self.slider_size)
+        self.overlay_img = cv2.resize(cv2.imread(overlay_img_path), self.slider_size)
+        self.base_cut_flg = False
+        self.fixed_img = cv2.resize(cv2.imread(fixed_img_path), self.slider_size)
         self.output_file_path = str(time.time()).replace('.','')+'_out.mp4'
         self.duration_sec = duration_sec
         self.slide_distance = slide_distance
@@ -27,8 +27,10 @@ class PieceFitMvCreator:
             fit_pos_x = 150
             fix_pos_y = self.base_size[1]-200-fixed_height
 
-            self.overlay_img = base.copy()
-            self.overlay_img = self.overlay_img[fix_pos_y:fix_pos_y+self.slider_size[1], fit_pos_x:fit_pos_x+self.slider_size[0]]
+            if self.base_cut_flg:
+                self.overlay_img = base.copy()
+                self.overlay_img = self.overlay_img[fix_pos_y:fix_pos_y+self.slider_size[1], fit_pos_x:fit_pos_x+self.slider_size[0]]
+
             overlay_img_height, overlay_img_width,_ = self.overlay_img.shape
             
             base[fix_pos_y:fix_pos_y+fixed_height, fit_pos_x:fit_pos_x+fixed_width] = self.fixed_img
